@@ -3,12 +3,18 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
 
 mongoose.connect("mongodb://localhost:27017/userDB");
+
 userSchema = new mongoose.Schema({
     email: String,
     password: String
 });
+
+const secret = "Thisisourlittlesecret";
+
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: ['password'] });
 
 User = mongoose.model("User", userSchema);
 
@@ -29,7 +35,7 @@ app.post("/login", function (req, res) {
     const userName = req.body.username;
     const userPassword = req.body.password;
 
-    User.findOne({ email: userName, password: userPassword })
+    User.findOne({ email: userName })
         .then(function (foundUser) {
             console.log("User found.");
             if (!foundUser) {
@@ -37,8 +43,10 @@ app.post("/login", function (req, res) {
                 res.redirect("/");
             }
             else {
-                console.log(foundUser);
-                res.redirect("secrets");
+                if (foundUser.password === userPassword) {
+                    console.log("Password matches");
+                    res.redirect("secrets");
+                }
             }
         })
         .catch(function (err) {
@@ -51,10 +59,11 @@ app.get("/register", function (req, res) {
     res.render("register")
 });
 app.post("/register", function (req, res) {
-    User.insertMany({
+    const newuser = new User({
         email: req.body.username,
         password: req.body.password
     });
+    newuser.save();
     res.redirect("/secrets");
 });
 
