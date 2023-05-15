@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const mongoose = require("mongoose");
 const encrypt = require("mongoose-encryption");
+require('dotenv').config()
 
 mongoose.connect("mongodb://localhost:27017/userDB");
 
@@ -12,9 +13,7 @@ userSchema = new mongoose.Schema({
     password: String
 });
 
-const secret = "Thisisourlittlesecret";
-
-userSchema.plugin(encrypt, { secret: secret, encryptedFields: ['password'] });
+userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] });
 
 User = mongoose.model("User", userSchema);
 
@@ -51,7 +50,7 @@ app.post("/login", function (req, res) {
         })
         .catch(function (err) {
             console.log(err);
-            res.redirect("home");
+            res.redirect("/");
         })
 
 });
